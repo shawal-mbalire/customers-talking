@@ -1,0 +1,23 @@
+# Root
+.env
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+dist/
+*.egg-info/
+.ruff_cache/
+.pytest_cache/
+server/credentials/
+
+# Angular
+client/node_modules/
+client/dist/
+client/.angular/
+
+# Editors
+.vscode/
+.idea/
+*.swp

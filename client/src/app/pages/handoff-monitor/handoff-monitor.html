@@ -1,0 +1,83 @@
+<div class="min-h-screen bg-background p-6">
+
+  <!-- Page header -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold tracking-tight text-foreground">Handoff Monitor</h1>
+    <p class="text-sm text-muted-foreground mt-1">
+      Escalated sessions awaiting a human agent · auto-refreshes every 10 s
+    </p>
+  </div>
+
+  @if (sessions$ | async; as sessions) {
+
+    <!-- Empty state -->
+    @if (sessions.length === 0) {
+      <div hlmCard class="flex flex-col items-center justify-center py-20 gap-3">
+        <svg class="h-10 w-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <p class="text-base font-medium text-foreground">All clear!</p>
+        <p class="text-sm text-muted-foreground">No sessions awaiting a human agent.</p>
+      </div>
+    }
+
+    <!-- Sessions table -->
+    @if (sessions.length > 0) {
+      <div hlmCard>
+        <!-- Card header row -->
+        <div class="flex items-center justify-between px-4 py-3 border-b border-border">
+          <span class="text-sm font-semibold text-foreground">Escalated Sessions</span>
+          <span hlmBadge variant="destructive">{{ sessions.length }} pending</span>
+        </div>
+
+        <div hlmTableContainer>
+          <table hlmTable class="w-full">
+            <thead hlmTHead>
+              <tr hlmTr>
+                <th hlmTh>Phone Number</th>
+                <th hlmTh>Last Intent</th>
+                <th hlmTh>Reason</th>
+                <th hlmTh>Timestamp</th>
+                <th hlmTh class="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody hlmTBody>
+              @for (s of sessions; track s.sessionId) {
+                <tr hlmTr>
+                  <td hlmTd class="font-medium">{{ s.phoneNumber }}</td>
+                  <td hlmTd>
+                    <span hlmBadge variant="secondary">{{ s.lastIntent }}</span>
+                  </td>
+                  <td hlmTd class="text-muted-foreground">{{ s.reason || '—' }}</td>
+                  <td hlmTd class="text-muted-foreground whitespace-nowrap">
+                    {{ s.timestamp | date:'dd MMM y, HH:mm:ss' }}
+                  </td>
+                  <td hlmTd class="text-right">
+                    <button
+                      hlmBtn
+                      size="sm"
+                      variant="outline"
+                      [disabled]="resolving[s.sessionId]"
+                      (click)="resolve(s)">
+                      {{ resolving[s.sessionId] ? 'Resolving…' : 'Mark Resolved' }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+  } @else {
+    <!-- Loading skeleton -->
+    <div hlmCard class="p-4 space-y-3">
+      @for (i of [1, 2, 3]; track i) {
+        <div hlmSkeleton class="h-10 w-full"></div>
+      }
+    </div>
+  }
+
+</div>
