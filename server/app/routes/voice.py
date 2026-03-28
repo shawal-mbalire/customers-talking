@@ -77,14 +77,15 @@ def _voice_response(text: str, gather: bool = True, end: bool = False) -> Respon
     callback_url = f"{proto}://{host}/voice"
 
     if end:
-        xml = f'<?xml version="1.0"?><Response><Say>{text}</Say><Hangup/></Response>'
+        # Africa's Talking ends the call when Response has no more actions
+        xml = f'<?xml version="1.0"?><Response><Say>{text}</Say></Response>'
     elif gather:
         xml = (
             f'<?xml version="1.0"?><Response>'
             f'<GetDigits timeout="30" finishOnKey="#" callbackUrl="{callback_url}">'
             f"<Say>{text}</Say>"
             f"</GetDigits>"
-            f"<Say>We did not receive any input. Goodbye.</Say><Hangup/>"
+            f"<Say>We did not receive any input. Goodbye.</Say>"
             f"</Response>"
         )
     else:
