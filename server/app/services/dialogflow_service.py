@@ -66,7 +66,17 @@ def _build_session_path(client: SessionsClient, session_id: str) -> str:
     cfg = current_app.config
     project = cfg["DIALOGFLOW_PROJECT_ID"]
     location = cfg["DIALOGFLOW_LOCATION"]
-    agent = cfg["DIALOGFLOW_AGENT_ID"]
+    agent = cfg.get("DIALOGFLOW_AGENT_ID")
+
+    # If the configured agent looks like a display name (not a UUID), allow a fallback env var
+    # or hardcoded UUID so running revisions with misconfigured envs still connect.
+    import re
+    uuid_regex = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+    if not agent or not uuid_regex.match(agent):
+        fallback = cfg.get("DIALOGFLOW_AGENT_UUID") or "2c676234-651f-4d29-bb48-4d5d041a1b73"
+        log.warning("DIALOGFLOW_AGENT_ID (%r) is not a UUID; using fallback agent %s", agent, fallback)
+        agent = fallback
+
     log.debug("Session path: project=%s location=%s agent=%s session=%s", project, location, agent, session_id)
     return client.session_path(
         project=project,
