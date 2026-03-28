@@ -1,5 +1,5 @@
 import os
-from flask import Flask, send_from_directory
+from flask import Flask
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -10,9 +10,7 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["200 per hour", "
 
 
 def create_app(config_class=Config) -> Flask:
-    # static_folder points to the Angular build copied in by Docker
-    static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
-    app = Flask(__name__, static_folder=static_dir, static_url_path="")
+    app = Flask(__name__)
     app.config.from_object(config_class)
 
     # Initialize Neon DB
@@ -23,7 +21,8 @@ def create_app(config_class=Config) -> Flask:
     from .services import solutions_store
     solutions_store._ensure_seeded()
 
-    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+    frontend_origin = os.getenv("FRONTEND_ORIGIN", "http://localhost:4200")
+    CORS(app, resources={r"/api/*": {"origins": frontend_origin}}, supports_credentials=True)
 
     limiter.init_app(app)
 
@@ -54,14 +53,5 @@ def create_app(config_class=Config) -> Flask:
     @app.get("/health")
     def health():
         return {"status": "ok", "service": "customers-talking-server"}
-
-    @app.route("/", defaults={"spa_path": ""})
-    @app.route("/<path:spa_path>")
-    def serve_angular(spa_path):
-        """Serve Angular SPA: static assets by name, index.html for all routes."""
-        full = os.path.join(app.static_folder, spa_path)
-        if spa_path and os.path.exists(full):
-            return send_from_directory(app.static_folder, spa_path)
-        return send_from_directory(app.static_folder, "index.html")
 
     return app
