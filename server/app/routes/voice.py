@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timezone
-from flask import Blueprint, current_app, make_response, request, Response
+from flask import Blueprint, make_response, request, Response
 from ..services import dialogflow_service, session_store
 
 log = logging.getLogger(__name__)
@@ -70,8 +70,11 @@ def _handle_voice() -> Response:
 
 
 def _voice_response(text: str, gather: bool = True, end: bool = False) -> Response:
-    base_url = current_app.config.get("BASE_URL", "").rstrip("/")
-    callback_url = f"{base_url}/voice"
+    # Derive callback URL from the incoming request so it always resolves to the
+    # public endpoint, regardless of BASE_URL config. Cloud Run sets X-Forwarded-Proto.
+    proto = request.headers.get("X-Forwarded-Proto", request.scheme)
+    host = request.headers.get("X-Forwarded-Host", request.host)
+    callback_url = f"{proto}://{host}/voice"
 
     if end:
         xml = f'<?xml version="1.0"?><Response><Say>{text}</Say><Hangup/></Response>'

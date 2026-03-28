@@ -1,8 +1,10 @@
+import logging
 from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
 from ..services import dialogflow_service, session_store, africastalking_service
 from ..models.session import EscalatedSession
 
+log = logging.getLogger(__name__)
 sms_bp = Blueprint("sms", __name__)
 
 SMS_SATISFACTION_PROMPT = "\n\nReply YES if that helped, or NO for more assistance."
@@ -17,6 +19,24 @@ def _now() -> str:
 
 @sms_bp.post("/sms")
 def sms_webhook():
+    try:
+        return _handle_sms()
+    except Exception:
+        log.exception("SMS webhook error")
+        return jsonify({"status": "error"}), 200  # return 200 so AT doesn't retry
+
+
+@sms_bp.post("/sms/inbox")
+def sms_inbox():
+    """Africa's Talking SMS Inbox callback — same logic as /sms."""
+    try:
+        return _handle_sms()
+    except Exception:
+        log.exception("SMS inbox webhook error")
+        return jsonify({"status": "error"}), 200
+
+
+def _handle_sms():
     if request.is_json:
         data = request.get_json(force=True)
         phone, text = data.get("from", ""), data.get("text", "")
