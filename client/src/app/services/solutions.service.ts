@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { env } from '../../env';
 
 export interface Solution {
   id: string;
@@ -28,7 +28,7 @@ export interface SolutionPayload {
 })
 export class SolutionsService {
   private http = inject(HttpClient);
-  private baseUrl = `${environment.apiUrl}/api/solutions`;
+  private baseUrl = `${env.apiUrl}/api/solutions`;
 
   getAll(): Observable<Solution[]> {
     return this.http.get<Solution[]>(this.baseUrl);

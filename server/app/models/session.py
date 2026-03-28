@@ -17,8 +17,13 @@ class UnifiedSession:
     agent_reply: str = ""
     reason: str = ""
     messages: list = field(default_factory=list)  # [{role, text, ts}]
+    awaiting_satisfaction: bool = False
     created_at: str = field(default_factory=_now)
     updated_at: str = field(default_factory=_now)
+
+    def append_message(self, role: str, text: str) -> None:
+        """Append a message to the conversation history."""
+        self.messages.append({"role": role, "text": text, "ts": _now()})
 
     def to_dict(self) -> dict:
         return {
@@ -31,6 +36,7 @@ class UnifiedSession:
             "agentReply": self.agent_reply,
             "reason": self.reason,
             "messages": self.messages,
+            "awaitingSatisfaction": self.awaiting_satisfaction,
             "createdAt": self.created_at,
             "updatedAt": self.updated_at,
         }

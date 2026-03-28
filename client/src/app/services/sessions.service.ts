@@ -1,7 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, timer, switchMap, shareReplay } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { Observable } from 'rxjs';
+import { env } from '../../env';
+
+export interface SessionMessage {
+  role: 'user' | 'bot' | 'system';
+  text: string;
+  ts: string;
+}
 
 export interface UnifiedSession {
   sessionId: string;
@@ -12,25 +18,25 @@ export interface UnifiedSession {
   lastMessage: string;
   agentReply: string;
   reason: string;
+  messages: SessionMessage[];
+  awaitingSatisfaction: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class SessionsService {
   private http = inject(HttpClient);
-  private baseUrl = `${environment.apiUrl}/api/sessions`;
+  private baseUrl = `${env.apiUrl}/api/sessions`;
 
   getSessions(status?: string, channel?: string): Observable<UnifiedSession[]> {
     let params = new HttpParams();
     if (status) params = params.set('status', status);
     if (channel) params = params.set('channel', channel);
-    return this.http.get<UnifiedSession[]>(this.baseUrl, { params });
+    return this.http.get<UnifiedSession[]>(this.baseUrl, { params, withCredentials: true });
   }
 
   resolve(sessionId: string): Observable<unknown> {
-    return this.http.delete(`${this.baseUrl}/escalated/${sessionId}`);
+    return this.http.delete(`${this.baseUrl}/escalated/${sessionId}`, { withCredentials: true });
   }
 }

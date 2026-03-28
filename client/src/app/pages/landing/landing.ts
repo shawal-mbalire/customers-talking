@@ -1,61 +1,78 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 import { HlmCardImports } from '@spartan-ng/helm/card';
 import { HlmBadgeImports } from '@spartan-ng/helm/badge';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
 
-const JOURNEY = [
+const STATS = [
+  { value: '70%', label: 'queries resolved without a human agent' },
+  { value: '< 2 s', label: 'average AI response time' },
+  { value: '3 channels', label: 'USSD · SMS · Voice in one platform' },
+  { value: '24 / 7', label: 'availability — no shift schedules needed' },
+];
+
+const PROBLEMS = [
   {
-    step: '1',
-    icon: '📟',
-    title: 'USSD First Contact',
-    body: 'Customer dials *384#. No internet needed. Works on any handset across Africa.',
+    problem: 'Customers can\'t reach you',
+    solution: 'USSD works on every mobile network, every handset — no smartphone or data required.',
   },
   {
-    step: '2',
-    icon: '🤖',
-    title: 'AI Resolves or Escalates',
-    body: 'Dialogflow CX detects intent. Predefined answers reply instantly. Complex issues trigger a live-agent handoff.',
+    problem: 'Support costs keep rising',
+    solution: 'AI triages and resolves common queries instantly. Human agents only handle what truly needs them.',
   },
   {
-    step: '3',
-    icon: '📞',
-    title: 'Voice / SMS for Complex Issues',
-    body: 'The customer receives an SMS or a voice callback. Context travels with them — no need to repeat themselves.',
+    problem: 'Agents repeat the same answers',
+    solution: 'A curated knowledge base answers FAQs across every channel in real time.',
+  },
+  {
+    problem: 'Customers repeat themselves',
+    solution: 'Sessions are tracked by phone number. Context flows from USSD to SMS to Voice automatically.',
+  },
+  {
+    problem: 'No visibility into support quality',
+    solution: 'A live dashboard shows every session, satisfaction signal, and escalation the moment it happens.',
+  },
+  {
+    problem: 'Escalations get lost',
+    solution: 'When the AI can\'t help, a structured handoff alerts your team with the full conversation history.',
   },
 ];
 
-const CHANNELS = [
+const FEATURES = [
   {
-    icon: '📟',
-    title: 'USSD',
-    code: '*384#',
-    description: 'Dial from any mobile phone — no internet required. Works on 2G and feature phones.',
-    steps: ['Dial *384#', 'Choose your issue from the menu', 'Follow the prompts', 'Get instant help'],
+    title: 'Omnichannel reach',
+    body: 'USSD reaches feature phones with zero data. SMS and Voice meet customers exactly where they are. One platform manages all three.',
   },
   {
-    icon: '💬',
-    title: 'SMS',
-    code: '20880',
-    description: 'Text our shortcode. AI reads your message, classifies intent, and replies within seconds.',
-    steps: ['Text your question to 20880', 'Receive an automated reply', 'Reply to continue the conversation'],
+    title: 'AI-first triage',
+    body: 'Dialogflow CX classifies intent in milliseconds. Predefined answers fire instantly. Uncommon queries escalate cleanly.',
   },
   {
-    icon: '📞',
-    title: 'Voice',
-    code: '0800 123 456',
-    description: 'Call our toll-free line. An AI voice agent guides you with DTMF prompts.',
-    steps: ['Call 0800 123 456 (toll-free)', 'Follow voice prompts', 'Press keys to navigate'],
+    title: 'Structured human handoff',
+    body: 'When AI can\'t resolve an issue, your team gets an alert with the full conversation — no cold transfers, no lost context.',
+  },
+  {
+    title: 'Satisfaction loops built in',
+    body: 'After every AI response, the platform asks if the customer is satisfied. A "No" auto-escalates before they give up.',
+  },
+  {
+    title: 'Real-time dashboard',
+    body: 'Monitor live sessions, filter by channel or status, resolve escalations, and manage your knowledge base — all in one view.',
+  },
+  {
+    title: 'Instant knowledge base',
+    body: 'Add predefined answers that fire before Dialogflow is even called. Update them live without redeployment.',
   },
 ];
 
-const HOW_IT_WORKS = [
-  { icon: '🔍', title: 'Intent Detection', body: 'Every message is passed through Dialogflow CX to identify what the customer needs.' },
-  { icon: '⚡', title: 'Predefined Solutions', body: 'Common questions are answered instantly from a curated knowledge base — no AI round-trip.' },
-  { icon: '🧑‍💼', title: 'Human Handoff', body: 'When the AI can\'t resolve the issue, a live-agent handoff fires. The agent dashboard lights up.' },
-  { icon: '🔗', title: 'Cross-Channel Context', body: 'Sessions are tracked by phone number. Start on USSD, continue via SMS — no repetition.' },
+const HOW = [
+  { step: '01', title: 'Customer contacts you', body: 'Via USSD (*384#), SMS (shortcode), or a toll-free voice line. No app required.' },
+  { step: '02', title: 'AI resolves or routes', body: 'Intent is detected. Common answers fire instantly. Complex issues are queued for a human with full context.' },
+  { step: '03', title: 'Agent takes over seamlessly', body: 'Your team sees the entire conversation history and picks up exactly where the AI left off.' },
+  { step: '04', title: 'You measure and improve', body: 'Every interaction is logged. Track resolution rates, satisfaction scores, and channel usage in real time.' },
 ];
 
 @Component({
@@ -64,7 +81,9 @@ const HOW_IT_WORKS = [
   templateUrl: './landing.html',
 })
 export class LandingComponent {
-  journey = JOURNEY;
-  channels = CHANNELS;
-  howItWorks = HOW_IT_WORKS;
+  auth = inject(AuthService);
+  stats = STATS;
+  problems = PROBLEMS;
+  features = FEATURES;
+  how = HOW;
 }

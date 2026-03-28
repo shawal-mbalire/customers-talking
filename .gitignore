@@ -21,3 +21,4 @@ client/.angular/
 .vscode/
 .idea/
 *.swp
+client/public/env.js

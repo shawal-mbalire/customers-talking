@@ -1,0 +1,121 @@
+<div class="min-h-screen bg-background p-6">
+
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold tracking-tight">Open Escalations</h1>
+    <p class="mt-1 text-sm text-muted-foreground">
+      Customers waiting for a live agent. Click a row to see full conversation context.
+    </p>
+  </div>
+
+  @if (sessions$ | async; as sessions) {
+
+    @if (sessions.length === 0) {
+      <div hlmCard class="flex flex-col items-center justify-center py-20 gap-3">
+        <svg class="h-10 w-10 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <p class="font-medium">All clear</p>
+        <p class="text-sm text-muted-foreground">No sessions awaiting a human agent.</p>
+      </div>
+    }
+
+    @if (sessions.length > 0) {
+      <div hlmCard>
+        <div class="flex items-center justify-between px-4 py-3 border-b border-border">
+          <span class="text-sm font-semibold">Escalated Sessions</span>
+          <span hlmBadge variant="destructive">{{ sessions.length }} pending</span>
+        </div>
+
+        <div hlmTableContainer>
+          <table hlmTable class="w-full">
+            <thead hlmTHead>
+              <tr hlmTr>
+                <th hlmTh></th>
+                <th hlmTh>Phone</th>
+                <th hlmTh>Channel</th>
+                <th hlmTh>Last Intent</th>
+                <th hlmTh>Reason</th>
+                <th hlmTh>Since</th>
+                <th hlmTh class="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody hlmTBody>
+              @for (s of sessions; track s.sessionId) {
+                <tr hlmTr class="cursor-pointer hover:bg-muted/50" (click)="toggleContext(s)">
+                  <td hlmTd class="w-8">
+                    <svg class="h-4 w-4 text-muted-foreground transition-transform"
+                         [class.rotate-90]="expanded() === s.sessionId"
+                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                  </td>
+                  <td hlmTd class="font-medium">{{ s.phoneNumber }}</td>
+                  <td hlmTd>
+                    <span hlmBadge variant="secondary">{{ s.channel | uppercase }}</span>
+                  </td>
+                  <td hlmTd class="text-muted-foreground">{{ s.lastIntent }}</td>
+                  <td hlmTd class="text-muted-foreground">{{ s.reason || '—' }}</td>
+                  <td hlmTd class="text-muted-foreground whitespace-nowrap">{{ s.updatedAt | date:'dd MMM, HH:mm' }}</td>
+                  <td hlmTd class="text-right" (click)="$event.stopPropagation()">
+                    <button hlmBtn size="sm" variant="outline"
+                      [disabled]="resolving[s.sessionId]" (click)="resolve(s)">
+                      {{ resolving[s.sessionId] ? 'Resolving…' : 'Claim & Resolve' }}
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- Conversation context panel -->
+                @if (expanded() === s.sessionId) {
+                  <tr hlmTr>
+                    <td hlmTd [attr.colspan]="7" class="bg-muted/30 p-0">
+                      <div class="p-4">
+                        <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Full conversation · {{ s.messages.length }} messages
+                        </p>
+
+                        @if (!s.messages || s.messages.length === 0) {
+                          <p class="text-sm text-muted-foreground">No messages recorded.</p>
+                        } @else {
+                          <div class="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1">
+                            @for (msg of s.messages; track msg.ts) {
+                              @if (msg.role === 'system') {
+                                <div class="flex justify-center">
+                                  <span class="rounded-full border border-border bg-background px-3 py-0.5 text-xs text-muted-foreground italic">
+                                    {{ msg.text }}
+                                  </span>
+                                </div>
+                              } @else {
+                                <div [class]="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
+                                  <div [class]="msg.role === 'user'
+                                    ? 'max-w-sm rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground'
+                                    : 'max-w-sm rounded-lg border border-border bg-card px-3 py-2 text-sm'">
+                                    <p class="whitespace-pre-wrap">{{ msg.text }}</p>
+                                    <p class="mt-1 text-xs opacity-60">{{ msg.ts | date:'HH:mm:ss' }}</p>
+                                  </div>
+                                </div>
+                              }
+                            }
+                          </div>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+  } @else {
+    <div hlmCard class="p-4 space-y-3">
+      @for (i of [1, 2, 3]; track i) {
+        <div hlmSkeleton class="h-10 w-full"></div>
+      }
+    </div>
+  }
+
+</div>

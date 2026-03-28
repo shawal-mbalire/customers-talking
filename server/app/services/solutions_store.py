@@ -1,110 +1,121 @@
-"""In-memory CRUD store for predefined Solution answers."""
+"""PostgreSQL-backed CRUD store for predefined Solution answers."""
 import uuid
+from datetime import datetime
+
+from psycopg2.extras import Json
+
+from ..db import get_cursor
 from ..models.session import Solution
 
-_solutions: dict[str, Solution] = {}
+
+def _row_to_solution(row: dict) -> Solution:
+    def _iso(v) -> str:
+        return v.isoformat() if isinstance(v, datetime) else str(v)
+
+    return Solution(
+        id=row["id"],
+        question=row["question"],
+        answer=row["answer"],
+        intent_name=row["intent_name"],
+        trigger_phrases=list(row["trigger_phrases"] or []),
+        channels=list(row["channels"] or ["all"]),
+        active=bool(row["active"]),
+        created_at=_iso(row["created_at"]),
+    )
 
 
 def _seed() -> None:
-    samples = [
-        Solution(
-            id=str(uuid.uuid4()),
-            question="How do I check my balance?",
-            answer="Dial *123# to check your account balance instantly.",
-            intent_name="check_balance",
-            trigger_phrases=["check balance", "my balance", "account balance", "balance"],
-            channels=["all"],
-        ),
-        Solution(
-            id=str(uuid.uuid4()),
-            question="What are your working hours?",
-            answer="We are open Monday to Friday, 8 AM – 6 PM EAT.",
-            intent_name="working_hours",
-            trigger_phrases=["working hours", "opening hours", "office hours", "open"],
-            channels=["all"],
-        ),
-        Solution(
-            id=str(uuid.uuid4()),
-            question="How do I reset my PIN?",
-            answer="Send RESET to 20880 and follow the instructions sent to you.",
-            intent_name="reset_pin",
-            trigger_phrases=["reset pin", "forgot pin", "change pin", "pin reset"],
-            channels=["all"],
-        ),
-        Solution(
-            id=str(uuid.uuid4()),
-            question="How do I make a payment?",
-            answer="Dial *456# and select 'Pay Bill', then enter the biller code provided.",
-            intent_name="make_payment",
-            trigger_phrases=["make payment", "pay bill", "payment", "pay"],
-            channels=["ussd", "sms"],
-        ),
-        Solution(
-            id=str(uuid.uuid4()),
-            question="What is the SMS shortcode?",
-            answer="Our SMS shortcode is 20880. Text your question and we'll reply instantly.",
-            intent_name="sms_shortcode",
-            trigger_phrases=["sms shortcode", "shortcode", "text number", "sms number"],
-            channels=["all"],
-        ),
-    ]
-    for s in samples:
-        _solutions[s.id] = s
+    with get_cursor() as cur:
+        cur.execute("SELECT COUNT(*) AS cnt FROM solutions")
+        if cur.fetchone()["cnt"] > 0:
+            return
+        samples = [
+            ("How do I check my balance?", "Dial *123# to check your account balance instantly.", "check_balance", ["check balance", "my balance", "account balance", "balance"], ["all"]),
+            ("What are your working hours?", "We are open Monday to Friday, 8 AM – 6 PM EAT.", "working_hours", ["working hours", "opening hours", "office hours", "open"], ["all"]),
+            ("How do I reset my PIN?", "Send RESET to 20880 and follow the instructions sent to you.", "reset_pin", ["reset pin", "forgot pin", "change pin", "pin reset"], ["all"]),
+            ("How do I make a payment?", "Dial *456# and select 'Pay Bill', then enter the biller code provided.", "make_payment", ["make payment", "pay bill", "payment", "pay"], ["ussd", "sms"]),
+            ("What is the SMS shortcode?", "Our SMS shortcode is 20880. Text your question and we'll reply instantly.", "sms_shortcode", ["sms shortcode", "shortcode", "text number", "sms number"], ["all"]),
+        ]
+        for q, a, intent, phrases, channels in samples:
+            cur.execute(
+                "INSERT INTO solutions (id, question, answer, intent_name, trigger_phrases, channels) VALUES (%s, %s, %s, %s, %s, %s)",
+                (str(uuid.uuid4()), q, a, intent, Json(phrases), Json(channels)),
+            )
 
 
-_seed()
+def _ensure_seeded() -> None:
+    _seed()
 
 
 def get_all() -> list[dict]:
-    return [s.to_dict() for s in _solutions.values()]
+    with get_cursor() as cur:
+        cur.execute("SELECT * FROM solutions ORDER BY created_at ASC")
+        return [_row_to_solution(r).to_dict() for r in cur.fetchall()]
 
 
 def get_active() -> list[Solution]:
-    return [s for s in _solutions.values() if s.active]
+    with get_cursor() as cur:
+        cur.execute("SELECT * FROM solutions WHERE active = TRUE ORDER BY created_at ASC")
+        return [_row_to_solution(r) for r in cur.fetchall()]
 
 
 def get_by_id(solution_id: str) -> Solution | None:
-    return _solutions.get(solution_id)
+    with get_cursor() as cur:
+        cur.execute("SELECT * FROM solutions WHERE id = %s", (solution_id,))
+        row = cur.fetchone()
+        return _row_to_solution(row) if row else None
 
 
 def create(data: dict) -> Solution:
-    solution = Solution(
-        id=str(uuid.uuid4()),
-        question=data.get("question", ""),
-        answer=data.get("answer", ""),
-        intent_name=data.get("intentName", ""),
-        trigger_phrases=data.get("triggerPhrases", []),
-        channels=data.get("channels", ["all"]),
-        active=data.get("active", True),
-    )
-    _solutions[solution.id] = solution
-    return solution
+    s_id = str(uuid.uuid4())
+    with get_cursor() as cur:
+        cur.execute(
+            "INSERT INTO solutions (id, question, answer, intent_name, trigger_phrases, channels, active) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING *",
+            (
+                s_id, data.get("question", ""), data.get("answer", ""),
+                data.get("intentName", ""),
+                Json(data.get("triggerPhrases", [])),
+                Json(data.get("channels", ["all"])),
+                data.get("active", True),
+            ),
+        )
+        return _row_to_solution(cur.fetchone())
 
 
 def update(solution_id: str, data: dict) -> Solution | None:
-    solution = _solutions.get(solution_id)
-    if not solution:
+    sol = get_by_id(solution_id)
+    if not sol:
         return None
     if "question" in data:
-        solution.question = data["question"]
+        sol.question = data["question"]
     if "answer" in data:
-        solution.answer = data["answer"]
+        sol.answer = data["answer"]
     if "intentName" in data:
-        solution.intent_name = data["intentName"]
+        sol.intent_name = data["intentName"]
     if "triggerPhrases" in data:
-        solution.trigger_phrases = data["triggerPhrases"]
+        sol.trigger_phrases = data["triggerPhrases"]
     if "channels" in data:
-        solution.channels = data["channels"]
+        sol.channels = data["channels"]
     if "active" in data:
-        solution.active = data["active"]
-    return solution
+        sol.active = data["active"]
+    with get_cursor() as cur:
+        cur.execute(
+            """
+            UPDATE solutions SET
+                question = %s, answer = %s, intent_name = %s,
+                trigger_phrases = %s, channels = %s, active = %s
+            WHERE id = %s RETURNING *
+            """,
+            (sol.question, sol.answer, sol.intent_name,
+             Json(sol.trigger_phrases), Json(sol.channels), sol.active, solution_id),
+        )
+        return _row_to_solution(cur.fetchone())
 
 
 def delete(solution_id: str) -> bool:
-    if solution_id in _solutions:
-        del _solutions[solution_id]
-        return True
-    return False
+    with get_cursor() as cur:
+        cur.execute("DELETE FROM solutions WHERE id = %s RETURNING id", (solution_id,))
+        return cur.fetchone() is not None
 
 
 def find_match(text: str, channel: str) -> Solution | None:

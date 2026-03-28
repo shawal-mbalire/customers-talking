@@ -1,20 +1,17 @@
 <div class="min-h-screen bg-background p-6">
 
-  <!-- Page header -->
   <div class="mb-6">
-    <h1 class="text-2xl font-semibold tracking-tight text-foreground">Sessions Dashboard</h1>
+    <h1 class="text-2xl font-semibold tracking-tight text-foreground">Sessions</h1>
     <p class="mt-1 text-sm text-muted-foreground">All customer interactions across every channel · auto-refreshes every 10 s</p>
   </div>
 
-  <!-- Filter bar: channels -->
+  <!-- Filters -->
   <div class="mb-3 flex flex-wrap gap-2">
     <button hlmBtn [variant]="channelFilter === '' ? 'default' : 'outline'" size="sm" (click)="setChannelFilter('')">All channels</button>
     <button hlmBtn [variant]="channelFilter === 'ussd' ? 'default' : 'outline'" size="sm" (click)="setChannelFilter('ussd')">USSD</button>
     <button hlmBtn [variant]="channelFilter === 'sms' ? 'default' : 'outline'" size="sm" (click)="setChannelFilter('sms')">SMS</button>
     <button hlmBtn [variant]="channelFilter === 'voice' ? 'default' : 'outline'" size="sm" (click)="setChannelFilter('voice')">Voice</button>
   </div>
-
-  <!-- Filter bar: status -->
   <div class="mb-6 flex flex-wrap gap-2">
     <button hlmBtn [variant]="statusFilter === '' ? 'default' : 'outline'" size="sm" (click)="setStatusFilter('')">All</button>
     <button hlmBtn [variant]="statusFilter === 'active' ? 'default' : 'outline'" size="sm" (click)="setStatusFilter('active')">Active</button>
@@ -24,23 +21,17 @@
 
   @if (sessions$ | async; as sessions) {
 
-    <!-- Empty state -->
     @if (sessions.length === 0) {
       <div hlmCard class="flex flex-col items-center justify-center gap-3 py-20">
-        <svg class="h-10 w-10 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0H4"/>
-        </svg>
-        <p class="text-base font-medium text-foreground">No sessions found</p>
+        <p class="text-base font-medium">No sessions found</p>
         <p class="text-sm text-muted-foreground">Try adjusting your filters or wait for customers to connect.</p>
       </div>
     }
 
-    <!-- Sessions table -->
     @if (sessions.length > 0) {
       <div hlmCard>
         <div class="flex items-center justify-between border-b border-border px-4 py-3">
-          <span class="text-sm font-semibold text-foreground">Sessions</span>
+          <span class="text-sm font-semibold">Sessions</span>
           <span hlmBadge variant="secondary">{{ sessions.length }} total</span>
         </div>
 
@@ -48,36 +39,34 @@
           <table hlmTable class="w-full">
             <thead hlmTHead>
               <tr hlmTr>
+                <th hlmTh></th>
                 <th hlmTh>Phone</th>
                 <th hlmTh>Channel</th>
                 <th hlmTh>Status</th>
                 <th hlmTh>Last Intent</th>
-                <th hlmTh>Last Message</th>
                 <th hlmTh>Updated</th>
                 <th hlmTh class="text-right">Action</th>
               </tr>
             </thead>
             <tbody hlmTBody>
               @for (s of sessions; track s.sessionId) {
-                <tr hlmTr>
+                <tr hlmTr class="cursor-pointer hover:bg-muted/50" (click)="toggleContext(s.sessionId)">
+                  <td hlmTd class="w-8">
+                    <svg class="h-4 w-4 text-muted-foreground transition-transform"
+                         [class.rotate-90]="expanded() === s.sessionId"
+                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                  </td>
                   <td hlmTd class="font-medium">{{ s.phoneNumber }}</td>
-                  <td hlmTd>
-                    <span hlmBadge [variant]="channelVariant(s.channel)">{{ s.channel | uppercase }}</span>
-                  </td>
-                  <td hlmTd>
-                    <span hlmBadge [variant]="statusVariant(s.status)">{{ s.status }}</span>
-                  </td>
+                  <td hlmTd><span hlmBadge [variant]="channelVariant(s.channel)">{{ s.channel | uppercase }}</span></td>
+                  <td hlmTd><span hlmBadge [variant]="statusVariant(s.status)">{{ s.status }}</span></td>
                   <td hlmTd class="text-muted-foreground">{{ s.lastIntent }}</td>
-                  <td hlmTd class="max-w-48 truncate text-muted-foreground">{{ s.lastMessage || '—' }}</td>
-                  <td hlmTd class="whitespace-nowrap text-muted-foreground">{{ s.updatedAt | date:'dd MMM y, HH:mm' }}</td>
-                  <td hlmTd class="text-right">
+                  <td hlmTd class="whitespace-nowrap text-muted-foreground">{{ s.updatedAt | date:'dd MMM, HH:mm' }}</td>
+                  <td hlmTd class="text-right" (click)="$event.stopPropagation()">
                     @if (s.status === 'escalated') {
-                      <button
-                        hlmBtn
-                        size="sm"
-                        variant="outline"
-                        [disabled]="resolving[s.sessionId]"
-                        (click)="resolve(s)">
+                      <button hlmBtn size="sm" variant="outline" [disabled]="resolving[s.sessionId]" (click)="resolve(s)">
                         {{ resolving[s.sessionId] ? 'Resolving…' : 'Resolve' }}
                       </button>
                     } @else {
@@ -85,6 +74,47 @@
                     }
                   </td>
                 </tr>
+
+                <!-- Expanded context panel -->
+                @if (expanded() === s.sessionId) {
+                  <tr hlmTr>
+                    <td hlmTd [attr.colspan]="7" class="bg-muted/30 p-0">
+                      <div class="p-4">
+                        <div class="mb-2 flex items-center gap-2">
+                          <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Conversation context</span>
+                          @if (s.reason) {
+                            <span hlmBadge variant="destructive" class="text-xs">{{ s.reason }}</span>
+                          }
+                        </div>
+
+                        @if (!s.messages || s.messages.length === 0) {
+                          <p class="text-sm text-muted-foreground">No messages recorded yet.</p>
+                        } @else {
+                          <div class="flex flex-col gap-2 max-h-72 overflow-y-auto">
+                            @for (msg of s.messages; track msg.ts) {
+                              @if (msg.role === 'system') {
+                                <div class="flex justify-center">
+                                  <span class="rounded-full border border-border bg-background px-3 py-0.5 text-xs text-muted-foreground">
+                                    {{ msg.text }}
+                                  </span>
+                                </div>
+                              } @else {
+                                <div [class]="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
+                                  <div [class]="msg.role === 'user'
+                                    ? 'max-w-xs rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground'
+                                    : 'max-w-xs rounded-lg border border-border bg-card px-3 py-2 text-sm text-card-foreground'">
+                                    <p class="whitespace-pre-wrap">{{ msg.text }}</p>
+                                    <p class="mt-1 text-xs opacity-60">{{ msg.ts | date:'HH:mm:ss' }}</p>
+                                  </div>
+                                </div>
+                              }
+                            }
+                          </div>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
               }
             </tbody>
           </table>
@@ -93,7 +123,6 @@
     }
 
   } @else {
-    <!-- Loading skeleton -->
     <div hlmCard class="space-y-3 p-4">
       @for (i of skeletonRows; track i) {
         <div hlmSkeleton class="h-10 w-full"></div>

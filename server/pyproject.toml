@@ -10,6 +10,10 @@ dependencies = [
     "africastalking>=1.2.7",
     "google-cloud-dialogflow-cx>=1.38.0",
     "python-dotenv>=1.0.0",
+    "flask-limiter>=4.1.1",
+    "psycopg2-binary>=2.9.9",
+    "PyJWT[cryptography]>=2.8.0",
+    "requests>=2.31.0",
 ]
 
 [tool.uv]

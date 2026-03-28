@@ -1,12 +1,33 @@
-<!-- Nav -->
 <header class="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
   <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-    <a routerLink="/" class="font-semibold text-foreground">customers‑talking</a>
+    <a routerLink="/" class="font-semibold tracking-tight text-foreground">customers‑talking</a>
+
     <nav class="flex items-center gap-1">
       <a hlmBtn variant="ghost" size="sm" routerLink="/" routerLinkActive="bg-muted" [routerLinkActiveOptions]="{exact:true}">Home</a>
-      <a hlmBtn variant="ghost" size="sm" routerLink="/sessions" routerLinkActive="bg-muted">Sessions</a>
-      <a hlmBtn variant="ghost" size="sm" routerLink="/solutions" routerLinkActive="bg-muted">Solutions</a>
-      <a hlmBtn variant="ghost" size="sm" routerLink="/handoff-monitor" routerLinkActive="bg-muted">Escalations</a>
+
+      @if (auth.isLoggedIn()) {
+        <a hlmBtn variant="ghost" size="sm" routerLink="/sessions" routerLinkActive="bg-muted">Sessions</a>
+        <a hlmBtn variant="ghost" size="sm" routerLink="/solutions" routerLinkActive="bg-muted">Solutions</a>
+        <a hlmBtn variant="ghost" size="sm" routerLink="/escalations" routerLinkActive="bg-muted">Escalations</a>
+        <button hlmBtn variant="ghost" size="sm" (click)="logout()">Sign out</button>
+      } @else {
+        <a hlmBtn variant="ghost" size="sm" routerLink="/login">Sign in</a>
+      }
+
+      <!-- Theme toggle -->
+      <button hlmBtn variant="ghost" size="icon" (click)="theme.toggle()" [attr.aria-label]="theme.isDark() ? 'Switch to light mode' : 'Switch to dark mode'">
+        @if (theme.isDark()) {
+          <!-- Sun -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+          </svg>
+        } @else {
+          <!-- Moon -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+          </svg>
+        }
+      </button>
     </nav>
   </div>
 </header>
@@ -14,4 +35,3 @@
 <main>
   <router-outlet />
 </main>
-

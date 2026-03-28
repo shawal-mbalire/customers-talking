@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal } from '@angular/core';
 import { AsyncPipe, UpperCasePipe, DatePipe } from '@angular/common';
 import { Observable, Subscription, timer, switchMap, shareReplay } from 'rxjs';
 import { SessionsService, UnifiedSession } from '../../services/sessions.service';
@@ -9,6 +9,7 @@ import { HlmTableImports } from '@spartan-ng/helm/table';
 import { HlmBadgeImports } from '@spartan-ng/helm/badge';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmSkeletonImports } from '@spartan-ng/helm/skeleton';
+import { HlmSeparatorImports } from '@spartan-ng/helm/separator';
 
 type BV = BadgeVariants['variant'];
 
@@ -23,6 +24,7 @@ type BV = BadgeVariants['variant'];
     ...HlmBadgeImports,
     HlmButton,
     ...HlmSkeletonImports,
+    ...HlmSeparatorImports,
   ],
   templateUrl: './sessions.html',
 })
@@ -33,6 +35,7 @@ export class SessionsComponent implements OnInit, OnDestroy {
   channelFilter = '';
   statusFilter = '';
   resolving: Record<string, boolean> = {};
+  expanded = signal<string | null>(null);
 
   private sub?: Subscription;
 
@@ -41,6 +44,10 @@ export class SessionsComponent implements OnInit, OnDestroy {
 
   setChannelFilter(v: string): void { this.channelFilter = v; this._refresh(); }
   setStatusFilter(v: string): void { this.statusFilter = v; this._refresh(); }
+
+  toggleContext(sessionId: string): void {
+    this.expanded.update((cur) => (cur === sessionId ? null : sessionId));
+  }
 
   resolve(s: UnifiedSession): void {
     this.resolving[s.sessionId] = true;
