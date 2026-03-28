@@ -21,11 +21,20 @@ class Config:
     DIALOGFLOW_AGENT_ID = os.getenv("DIALOGFLOW_AGENT_ID", "")
     DIALOGFLOW_LANGUAGE_CODE = os.getenv("DIALOGFLOW_LANGUAGE_CODE", "en")
 
+    # Google Service Account (individual fields — no JSON file needed)
+    GOOGLE_SERVICE_ACCOUNT_EMAIL = os.getenv("GOOGLE_SERVICE_ACCOUNT_EMAIL", "")
+    GOOGLE_PRIVATE_KEY = os.getenv("GOOGLE_PRIVATE_KEY", "").replace("\\n", "\n")
+    GOOGLE_PRIVATE_KEY_ID = os.getenv("GOOGLE_PRIVATE_KEY_ID", "")
+
     # Base URL (used in Voice XML callbacks)
     BASE_URL = os.getenv("BASE_URL", "http://localhost:5000")
 
     # Neon Database
     DATABASE_URL = os.getenv("DATABASE_URL", "")
+
+    # flask-limiter storage — explicitly memory to silence the default warning.
+    # For multi-instance Cloud Run, swap to Redis: RATELIMIT_STORAGE_URI=redis://...
+    RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
 
     # Neon Auth (Better Auth)
     NEON_AUTH_BASE_URL = os.getenv("NEON_AUTH_BASE_URL", "")

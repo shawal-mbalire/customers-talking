@@ -311,7 +311,7 @@ requires-dist = [
     { name = "google-cloud-dialogflow-cx", specifier = ">=1.38.0" },
     { name = "gunicorn", specifier = ">=23.0.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.9" },
-    { name = "pyjwt", extras = ["cryptography"], specifier = ">=2.8.0" },
+    { name = "pyjwt", specifier = ">=2.8.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "requests", specifier = ">=2.31.0" },
 ]
