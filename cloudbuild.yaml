@@ -29,6 +29,6 @@ images:
 
 substitutions:
   _SERVICE_NAME: customers-talking-api
-  _REGION: us-central1
-  _AR_HOSTNAME: us-central1-docker.pkg.dev
+  _REGION: europe-west1
+  _AR_HOSTNAME: europe-west1-docker.pkg.dev
   _AR_REPOSITORY: cloud-run-source-deploy
