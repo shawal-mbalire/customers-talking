@@ -1,0 +1,104 @@
+<div class="min-h-screen bg-background p-6">
+
+  <!-- Page header -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold tracking-tight text-foreground">Sessions Dashboard</h1>
+    <p class="mt-1 text-sm text-muted-foreground">All customer interactions across every channel · auto-refreshes every 10 s</p>
+  </div>
+
+  <!-- Filter bar: channels -->
+  <div class="mb-3 flex flex-wrap gap-2">
+    <button hlmBtn [variant]="channelFilter === '' ? 'default' : 'outline'" size="sm" (click)="setChannelFilter('')">All channels</button>
+    <button hlmBtn [variant]="channelFilter === 'ussd' ? 'default' : 'outline'" size="sm" (click)="setChannelFilter('ussd')">USSD</button>
+    <button hlmBtn [variant]="channelFilter === 'sms' ? 'default' : 'outline'" size="sm" (click)="setChannelFilter('sms')">SMS</button>
+    <button hlmBtn [variant]="channelFilter === 'voice' ? 'default' : 'outline'" size="sm" (click)="setChannelFilter('voice')">Voice</button>
+  </div>
+
+  <!-- Filter bar: status -->
+  <div class="mb-6 flex flex-wrap gap-2">
+    <button hlmBtn [variant]="statusFilter === '' ? 'default' : 'outline'" size="sm" (click)="setStatusFilter('')">All</button>
+    <button hlmBtn [variant]="statusFilter === 'active' ? 'default' : 'outline'" size="sm" (click)="setStatusFilter('active')">Active</button>
+    <button hlmBtn [variant]="statusFilter === 'escalated' ? 'default' : 'outline'" size="sm" (click)="setStatusFilter('escalated')">Escalated</button>
+    <button hlmBtn [variant]="statusFilter === 'resolved' ? 'default' : 'outline'" size="sm" (click)="setStatusFilter('resolved')">Resolved</button>
+  </div>
+
+  @if (sessions$ | async; as sessions) {
+
+    <!-- Empty state -->
+    @if (sessions.length === 0) {
+      <div hlmCard class="flex flex-col items-center justify-center gap-3 py-20">
+        <svg class="h-10 w-10 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0H4"/>
+        </svg>
+        <p class="text-base font-medium text-foreground">No sessions found</p>
+        <p class="text-sm text-muted-foreground">Try adjusting your filters or wait for customers to connect.</p>
+      </div>
+    }
+
+    <!-- Sessions table -->
+    @if (sessions.length > 0) {
+      <div hlmCard>
+        <div class="flex items-center justify-between border-b border-border px-4 py-3">
+          <span class="text-sm font-semibold text-foreground">Sessions</span>
+          <span hlmBadge variant="secondary">{{ sessions.length }} total</span>
+        </div>
+
+        <div hlmTableContainer>
+          <table hlmTable class="w-full">
+            <thead hlmTHead>
+              <tr hlmTr>
+                <th hlmTh>Phone</th>
+                <th hlmTh>Channel</th>
+                <th hlmTh>Status</th>
+                <th hlmTh>Last Intent</th>
+                <th hlmTh>Last Message</th>
+                <th hlmTh>Updated</th>
+                <th hlmTh class="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody hlmTBody>
+              @for (s of sessions; track s.sessionId) {
+                <tr hlmTr>
+                  <td hlmTd class="font-medium">{{ s.phoneNumber }}</td>
+                  <td hlmTd>
+                    <span hlmBadge [variant]="channelVariant(s.channel)">{{ s.channel | uppercase }}</span>
+                  </td>
+                  <td hlmTd>
+                    <span hlmBadge [variant]="statusVariant(s.status)">{{ s.status }}</span>
+                  </td>
+                  <td hlmTd class="text-muted-foreground">{{ s.lastIntent }}</td>
+                  <td hlmTd class="max-w-48 truncate text-muted-foreground">{{ s.lastMessage || '—' }}</td>
+                  <td hlmTd class="whitespace-nowrap text-muted-foreground">{{ s.updatedAt | date:'dd MMM y, HH:mm' }}</td>
+                  <td hlmTd class="text-right">
+                    @if (s.status === 'escalated') {
+                      <button
+                        hlmBtn
+                        size="sm"
+                        variant="outline"
+                        [disabled]="resolving[s.sessionId]"
+                        (click)="resolve(s)">
+                        {{ resolving[s.sessionId] ? 'Resolving…' : 'Resolve' }}
+                      </button>
+                    } @else {
+                      <span class="text-xs text-muted-foreground">—</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+  } @else {
+    <!-- Loading skeleton -->
+    <div hlmCard class="space-y-3 p-4">
+      @for (i of skeletonRows; track i) {
+        <div hlmSkeleton class="h-10 w-full"></div>
+      }
+    </div>
+  }
+
+</div>

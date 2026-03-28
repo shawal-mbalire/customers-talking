@@ -29,8 +29,23 @@ def _build_session_path(client: SessionsClient, session_id: str) -> str:
     )
 
 
-def detect_intent(user_text: str, session_id: str | None = None) -> dict:
-    """Send text to Dialogflow CX and parse the response."""
+def detect_intent(user_text: str, session_id: str | None = None, channel: str = "ussd") -> dict:
+    """Send text to Dialogflow CX and parse the response.
+
+    First checks predefined solutions. Falls back to Dialogflow CX.
+    """
+    from . import solutions_store
+
+    solution = solutions_store.find_match(user_text, channel)
+    if solution:
+        return {
+            "text": solution.answer,
+            "intent_name": solution.intent_name or "predefined_solution",
+            "is_handoff": False,
+            "handoff_reason": "",
+            "source": "predefined",
+        }
+
     cfg = current_app.config
     session_id = session_id or str(uuid.uuid4())
 
@@ -71,4 +86,5 @@ def detect_intent(user_text: str, session_id: str | None = None) -> dict:
         "intent_name": intent_name,
         "is_handoff": is_handoff,
         "handoff_reason": handoff_reason,
+        "source": "dialogflow",
     }

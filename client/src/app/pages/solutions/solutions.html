@@ -1,0 +1,116 @@
+<div class="min-h-screen bg-background p-6">
+
+  <!-- Page header -->
+  <div class="mb-6 flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight text-foreground">Solutions Manager</h1>
+      <p class="mt-1 text-sm text-muted-foreground">Predefined answers to common questions — checked before Dialogflow CX.</p>
+    </div>
+    <button hlmBtn size="sm" (click)="toggleAddForm()">
+      {{ showAddForm && !editingId ? 'Cancel' : '+ Add Solution' }}
+    </button>
+  </div>
+
+  <!-- Add / Edit Form -->
+  @if (showAddForm) {
+    <div hlmCard class="mb-6 p-6">
+      <h2 class="mb-4 text-base font-semibold text-foreground">{{ editingId ? 'Edit Solution' : 'New Solution' }}</h2>
+      <form [formGroup]="form" (ngSubmit)="save()" class="space-y-4">
+        <div class="space-y-1">
+          <label hlmLabel for="question">Question <span class="text-destructive">*</span></label>
+          <input hlmInput id="question" formControlName="question" placeholder="e.g. How do I check my balance?" class="w-full" />
+        </div>
+
+        <div class="space-y-1">
+          <label hlmLabel for="answer">Answer <span class="text-destructive">*</span></label>
+          <textarea hlmTextarea id="answer" formControlName="answer" placeholder="The reply to send to the customer." rows="3" class="w-full"></textarea>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div class="space-y-1">
+            <label hlmLabel for="intentName">Intent Name <span class="text-xs text-muted-foreground">(optional)</span></label>
+            <input hlmInput id="intentName" formControlName="intentName" placeholder="e.g. check_balance" class="w-full" />
+          </div>
+
+          <div class="space-y-1">
+            <label hlmLabel for="triggerPhrases">Trigger Phrases <span class="text-xs text-muted-foreground">(comma-separated)</span></label>
+            <input hlmInput id="triggerPhrases" formControlName="triggerPhrases" placeholder="e.g. balance, my balance, check balance" class="w-full" />
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input
+            hlmCheckbox
+            id="active"
+            type="checkbox"
+            [checked]="form.get('active')?.value"
+            (change)="form.get('active')?.setValue($any($event.target).checked)" />
+          <label hlmLabel for="active" class="cursor-pointer">Active</label>
+        </div>
+
+        <div class="flex gap-2">
+          <button hlmBtn type="submit" size="sm" [disabled]="form.invalid || saving">
+            {{ saving ? 'Saving…' : editingId ? 'Update' : 'Create' }}
+          </button>
+          <button hlmBtn type="button" variant="outline" size="sm" (click)="cancelEdit()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- Solutions table -->
+  @if (loading) {
+    <div hlmCard class="p-6 text-center text-sm text-muted-foreground">Loading solutions…</div>
+  } @else if (solutions.length === 0) {
+    <div hlmCard class="flex flex-col items-center justify-center gap-3 py-20">
+      <p class="text-base font-medium text-foreground">No solutions yet</p>
+      <p class="text-sm text-muted-foreground">Add your first predefined answer above.</p>
+    </div>
+  } @else {
+    <div hlmCard>
+      <div hlmTableContainer>
+        <table hlmTable class="w-full">
+          <thead hlmTHead>
+            <tr hlmTr>
+              <th hlmTh>Question</th>
+              <th hlmTh>Answer</th>
+              <th hlmTh>Triggers</th>
+              <th hlmTh>Status</th>
+              <th hlmTh class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody hlmTBody>
+            @for (s of solutions; track s.id) {
+              <tr hlmTr>
+                <td hlmTd class="max-w-56 font-medium">{{ s.question }}</td>
+                <td hlmTd class="max-w-64 text-muted-foreground">{{ s.answer }}</td>
+                <td hlmTd>
+                  <div class="flex flex-wrap gap-1">
+                    @for (phrase of s.triggerPhrases.slice(0, 3); track phrase) {
+                      <span hlmBadge variant="secondary" class="text-xs">{{ phrase }}</span>
+                    }
+                    @if (s.triggerPhrases.length > 3) {
+                      <span class="text-xs text-muted-foreground">+{{ s.triggerPhrases.length - 3 }} more</span>
+                    }
+                  </div>
+                </td>
+                <td hlmTd>
+                  <span hlmBadge [variant]="s.active ? 'default' : 'outline'">
+                    {{ s.active ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td hlmTd class="text-right">
+                  <div class="flex justify-end gap-2">
+                    <button hlmBtn size="sm" variant="outline" (click)="startEdit(s)">Edit</button>
+                    <button hlmBtn size="sm" variant="destructive" (click)="deleteSolution(s.id)">Delete</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+</div>

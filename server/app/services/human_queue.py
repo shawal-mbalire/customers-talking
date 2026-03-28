@@ -1,25 +1,34 @@
 """
-In-memory human queue. Replace with a database (Redis/Postgres)
-in production by swapping out these two functions.
+In-memory human queue. Delegates to session_store internally.
 """
 from ..models.session import EscalatedSession
-
-_queue: list[EscalatedSession] = []
+from . import session_store
 
 
 def enqueue(session: EscalatedSession) -> None:
-    """Add an escalated session to the human queue."""
-    _queue.append(session)
+    """Mark a session as escalated in the session store."""
+    existing = session_store.find_by_session_id(session.session_id)
+    if existing:
+        existing.status = "escalated"
+        existing.reason = session.reason
+        existing.last_intent = session.last_intent
+        session_store.update(existing)
+    else:
+        # Create a new unified session for this escalation
+        unified = session_store.get_or_create(
+            session.phone_number, "ussd", session.session_id
+        )
+        unified.status = "escalated"
+        unified.reason = session.reason
+        unified.last_intent = session.last_intent
+        session_store.update(unified)
 
 
 def get_all() -> list[dict]:
-    """Return all queued sessions as JSON-serialisable dicts."""
-    return [s.to_dict() for s in _queue]
+    """Return all escalated sessions."""
+    return session_store.get_by_status("escalated")
 
 
 def remove(session_id: str) -> bool:
-    """Remove a resolved session from the queue. Returns True if found."""
-    global _queue
-    before = len(_queue)
-    _queue = [s for s in _queue if s.session_id != session_id]
-    return len(_queue) < before
+    """Resolve a session. Returns True if found."""
+    return session_store.resolve(session_id)

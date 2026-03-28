@@ -17,3 +17,6 @@ class Config:
     DIALOGFLOW_LOCATION = os.getenv("DIALOGFLOW_LOCATION", "global")
     DIALOGFLOW_AGENT_ID = os.getenv("DIALOGFLOW_AGENT_ID", "")
     DIALOGFLOW_LANGUAGE_CODE = os.getenv("DIALOGFLOW_LANGUAGE_CODE", "en")
+
+    # Base URL (used in Voice XML callbacks)
+    BASE_URL = os.getenv("BASE_URL", "http://localhost:5000")

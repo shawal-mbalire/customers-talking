@@ -1,1 +1,17 @@
-<router-outlet />
+<!-- Nav -->
+<header class="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
+  <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
+    <a routerLink="/" class="font-semibold text-foreground">customers‑talking</a>
+    <nav class="flex items-center gap-1">
+      <a hlmBtn variant="ghost" size="sm" routerLink="/" routerLinkActive="bg-muted" [routerLinkActiveOptions]="{exact:true}">Home</a>
+      <a hlmBtn variant="ghost" size="sm" routerLink="/sessions" routerLinkActive="bg-muted">Sessions</a>
+      <a hlmBtn variant="ghost" size="sm" routerLink="/solutions" routerLinkActive="bg-muted">Solutions</a>
+      <a hlmBtn variant="ghost" size="sm" routerLink="/handoff-monitor" routerLinkActive="bg-muted">Escalations</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <router-outlet />
+</main>
+

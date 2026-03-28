@@ -1,0 +1,90 @@
+<!-- Hero -->
+<section class="border-b border-border px-6 py-20 text-center">
+  <span hlmBadge variant="outline" class="mb-4">Africa's Talking · Dialogflow CX · Angular · Flask</span>
+  <h1 class="mt-4 text-4xl font-bold tracking-tight text-foreground">
+    One conversation. <span class="text-primary">Any channel.</span>
+  </h1>
+  <p class="mx-auto mt-4 max-w-xl text-muted-foreground">
+    Start on USSD, continue via SMS or Voice — your context travels with you.
+    AI resolves common issues instantly; complex ones reach a human in seconds.
+  </p>
+  <div class="mt-8 flex justify-center gap-3">
+    <button hlmBtn routerLink="/sessions">Open Sessions Dashboard</button>
+    <button hlmBtn variant="outline" routerLink="/solutions">Manage Solutions</button>
+  </div>
+</section>
+
+<!-- Journey -->
+<section class="px-6 py-16">
+  <h2 class="mb-10 text-center text-2xl font-semibold text-foreground">The Omnichannel Journey</h2>
+  <div class="mx-auto grid max-w-4xl gap-4 sm:grid-cols-3">
+    @for (j of journey; track j.step) {
+      <div hlmCard class="p-6">
+        <div class="mb-3 flex items-center gap-3">
+          <span hlmBadge>{{ j.step }}</span>
+          <span class="text-2xl">{{ j.icon }}</span>
+        </div>
+        <p class="font-semibold text-foreground">{{ j.title }}</p>
+        <p class="mt-2 text-sm text-muted-foreground">{{ j.body }}</p>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- Channels -->
+<section class="border-t border-border bg-muted/40 px-6 py-16">
+  <h2 class="mb-10 text-center text-2xl font-semibold text-foreground">How to Reach Us</h2>
+  <div class="mx-auto grid max-w-5xl gap-4 sm:grid-cols-3">
+    @for (ch of channels; track ch.title) {
+      <div hlmCard class="flex flex-col gap-4 p-6">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl">{{ ch.icon }}</span>
+          <div>
+            <p class="font-semibold text-foreground">{{ ch.title }}</p>
+            <code class="text-xs text-muted-foreground">{{ ch.code }}</code>
+          </div>
+        </div>
+        <div hlmSeparator></div>
+        <p class="text-sm text-muted-foreground">{{ ch.description }}</p>
+        <ol class="mt-auto space-y-1">
+          @for (step of ch.steps; track step; let i = $index) {
+            <li class="flex items-start gap-2 text-sm">
+              <span hlmBadge variant="secondary" class="h-5 min-w-5 shrink-0 justify-center px-0 text-xs">{{ i + 1 }}</span>
+              <span class="text-foreground">{{ step }}</span>
+            </li>
+          }
+        </ol>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="px-6 py-16">
+  <h2 class="mb-10 text-center text-2xl font-semibold text-foreground">How It Works</h2>
+  <div class="mx-auto grid max-w-4xl gap-4 sm:grid-cols-2">
+    @for (h of howItWorks; track h.title) {
+      <div hlmCard class="flex gap-4 p-5">
+        <span class="mt-0.5 text-2xl">{{ h.icon }}</span>
+        <div>
+          <p class="font-semibold text-foreground">{{ h.title }}</p>
+          <p class="mt-1 text-sm text-muted-foreground">{{ h.body }}</p>
+        </div>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="border-t border-border bg-muted/40 px-6 py-16 text-center">
+  <h2 class="text-2xl font-semibold text-foreground">Ready to explore?</h2>
+  <p class="mt-2 text-muted-foreground">Monitor live sessions or configure predefined answers from the dashboard.</p>
+  <div class="mt-6 flex justify-center gap-3">
+    <button hlmBtn routerLink="/sessions">Sessions Dashboard →</button>
+    <button hlmBtn variant="outline" routerLink="/handoff-monitor">Escalations →</button>
+  </div>
+</section>
+
+<footer class="border-t border-border px-6 py-6 text-center text-xs text-muted-foreground">
+  customers-talking · Africa's Talking · Dialogflow CX · Angular 21 · Flask
+</footer>

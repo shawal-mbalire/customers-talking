@@ -20,3 +20,10 @@ def send_handoff_sms(phone_number: str) -> dict:
     )
     response = sms.send(message, [phone_number])
     return response
+
+
+def send_sms(phone_number: str, message: str) -> dict:
+    """Send an arbitrary SMS to the given phone number."""
+    sms = _get_sms()
+    response = sms.send(message, [phone_number])
+    return response
