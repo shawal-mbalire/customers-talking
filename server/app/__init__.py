@@ -69,31 +69,19 @@ def create_app(config_class=Config) -> Flask:
 
     @app.get("/debug/dialogflow")
     def debug_dialogflow():
-        """Temporary: test Dialogflow CX connection and return raw error if any."""
-        import traceback
-        from .services.dialogflow_service import _get_credentials, _build_session_path
-        from google.cloud.dialogflowcx_v3beta1 import SessionsClient
-        from google.cloud.dialogflowcx_v3beta1.types import DetectIntentRequest, QueryInput, TextInput
+        """Temporary: test Dialogflow CX connection via dialogflow_service.detect_intent.
+
+        This uses the higher-level wrapper which always returns a serializable dict
+        (falls back gracefully) to avoid returning raw protobuf/gRPC objects.
+        """
+        from .services.dialogflow_service import detect_intent
         try:
-            creds = _get_credentials()
-            location = app.config["DIALOGFLOW_LOCATION"]
-            client = SessionsClient(
-                credentials=creds,
-                client_options={"api_endpoint": f"{location}-dialogflow.googleapis.com"},
-            )
-            session_path = _build_session_path(client, "debug-test-session")
-            req = DetectIntentRequest(
-                session=session_path,
-                query_input=QueryInput(
-                    text=TextInput(text="hello"),
-                    language_code=app.config["DIALOGFLOW_LANGUAGE_CODE"],
-                ),
-            )
-            response = client.detect_intent(request=req)
-            messages = [m.text.text for m in response.query_result.response_messages if m.text.text]
-            intent = getattr(response.query_result.intent, "display_name", "unknown")
-            return {"status": "ok", "intent": intent, "messages": messages}
+            result = detect_intent("hello", session_id="debug-test-session", channel="debug")
+            # result is a dict with keys: text, intent_name, is_handoff, source
+            return {"status": "ok", "dialogflow": result}
         except Exception as e:
+            # As a last resort, return stringified error
+            import traceback
             return {"status": "error", "error": str(e), "trace": traceback.format_exc()}, 500
 
     return app
