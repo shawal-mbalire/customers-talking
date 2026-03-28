@@ -2,7 +2,7 @@
 FROM node:22-slim AS frontend
 WORKDIR /client
 COPY client/package*.json ./
-RUN npm ci
+RUN npm install -g npm@11 && npm ci
 COPY client/ .
 # env.js is gitignored; copy the example so Angular build has it
 RUN cp public/env.example.js public/env.js
