@@ -59,29 +59,5 @@ def create_app(config_class=Config) -> Flask:
     def health():
         return {"status": "ok", "service": "customers-talking-server"}
 
-    @app.get("/debug/config")
-    def debug_config():
-        """Temporary: show which config keys are set (not values)."""
-        keys = ["DIALOGFLOW_PROJECT_ID", "DIALOGFLOW_AGENT_ID", "DIALOGFLOW_LOCATION",
-                "GOOGLE_SERVICE_ACCOUNT_EMAIL", "GOOGLE_PRIVATE_KEY", "GOOGLE_PRIVATE_KEY_ID",
-                "AT_USERNAME", "AT_API_KEY", "DATABASE_URL"]
-        return {k: bool(app.config.get(k)) for k in keys}
-
-    @app.get("/debug/dialogflow")
-    def debug_dialogflow():
-        """Temporary: test Dialogflow CX connection via dialogflow_service.detect_intent.
-
-        This uses the higher-level wrapper which always returns a serializable dict
-        (falls back gracefully) to avoid returning raw protobuf/gRPC objects.
-        """
-        from .services.dialogflow_service import detect_intent
-        try:
-            result = detect_intent("hello", session_id="debug-test-session", channel="debug")
-            # result is a dict with keys: text, intent_name, is_handoff, source
-            return {"status": "ok", "dialogflow": result}
-        except Exception as e:
-            # As a last resort, return stringified error
-            import traceback
-            return {"status": "error", "error": str(e), "trace": traceback.format_exc()}, 500
 
     return app
