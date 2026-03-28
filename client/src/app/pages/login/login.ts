@@ -18,7 +18,7 @@ export class LoginComponent {
   private router = inject(Router);
 
   form = this.fb.nonNullable.group({
-    username: ['', Validators.required],
+    email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
   });
   error = signal('');
@@ -28,11 +28,11 @@ export class LoginComponent {
     if (this.form.invalid) return;
     this.loading.set(true);
     this.error.set('');
-    const { username, password } = this.form.getRawValue();
-    this.auth.login(username, password).subscribe({
+    const { email, password } = this.form.getRawValue();
+    this.auth.login(email, password).subscribe({
       next: () => this.router.navigateByUrl('/sessions'),
       error: (e) => {
-        this.error.set(e.error?.error ?? 'Login failed');
+        this.error.set(e?.message ?? e?.error?.message ?? 'Login failed');
         this.loading.set(false);
       },
     });

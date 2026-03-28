@@ -1,11 +1,10 @@
 import { Injectable, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { tap, catchError, of } from 'rxjs';
-import { env } from '../../env';
+import { from, switchMap, tap, of, catchError } from 'rxjs';
+import { authClient } from '../auth-client';
 
-interface AuthUser {
+export interface AuthUser {
   id: string;
-  username: string;
+  email: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -14,30 +13,32 @@ export class AuthService {
   readonly currentUser = this._user.asReadonly();
   readonly isLoggedIn = () => this._user() !== null;
 
-  constructor(private http: HttpClient) {}
-
-  /** Call once at app startup to restore session */
   checkSession() {
-    return this.http
-      .get<AuthUser>(`${env.apiUrl}/api/auth/me`, { withCredentials: true })
-      .pipe(
-        tap((user) => this._user.set(user)),
-        catchError(() => {
-          this._user.set(null);
-          return of(null);
-        }),
-      );
+    return from(authClient.getSession()).pipe(
+      tap((session) => {
+        const user = session?.data?.user;
+        this._user.set(user ? { id: user.id, email: user.email } : null);
+      }),
+      catchError(() => {
+        this._user.set(null);
+        return of(null);
+      }),
+    );
   }
 
-  login(username: string, password: string) {
-    return this.http
-      .post<AuthUser>(`${env.apiUrl}/api/auth/login`, { username, password }, { withCredentials: true })
-      .pipe(tap((user) => this._user.set(user)));
+  login(email: string, password: string) {
+    return from(authClient.signIn.email({ email, password })).pipe(
+      tap((result: any) => {
+        if (result.error) throw result.error;
+        const user = result.data?.user;
+        this._user.set(user ? { id: user.id, email: user.email } : null);
+      }),
+    );
   }
 
   logout() {
-    return this.http
-      .post(`${env.apiUrl}/api/auth/logout`, {}, { withCredentials: true })
-      .pipe(tap(() => this._user.set(null)));
+    return from(authClient.signOut()).pipe(
+      tap(() => this._user.set(null)),
+    );
   }
 }

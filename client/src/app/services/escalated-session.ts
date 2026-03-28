@@ -25,11 +25,11 @@ export class EscalatedSessionService {
   private baseUrl = `${env.apiUrl}/api/sessions/escalated`;
 
   sessions$: Observable<EscalatedSession[]> = timer(0, 10_000).pipe(
-    switchMap(() => this.http.get<EscalatedSession[]>(this.baseUrl, { withCredentials: true })),
+    switchMap(() => this.http.get<EscalatedSession[]>(this.baseUrl)),
     shareReplay(1),
   );
 
   resolve(sessionId: string): Observable<unknown> {
-    return this.http.delete(`${this.baseUrl}/${sessionId}`, { withCredentials: true });
+    return this.http.delete(`${this.baseUrl}/${sessionId}`);
   }
 }

@@ -33,10 +33,10 @@ export class SessionsService {
     let params = new HttpParams();
     if (status) params = params.set('status', status);
     if (channel) params = params.set('channel', channel);
-    return this.http.get<UnifiedSession[]>(this.baseUrl, { params, withCredentials: true });
+    return this.http.get<UnifiedSession[]>(this.baseUrl, { params });
   }
 
   resolve(sessionId: string): Observable<unknown> {
-    return this.http.delete(`${this.baseUrl}/escalated/${sessionId}`, { withCredentials: true });
+    return this.http.delete(`${this.baseUrl}/escalated/${sessionId}`);
   }
 }
