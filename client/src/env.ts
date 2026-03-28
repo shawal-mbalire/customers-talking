@@ -6,7 +6,9 @@ declare global {
 
 export const env = {
   get apiUrl(): string {
-    return window.__env?.apiUrl ?? 'http://localhost:5000';
+    // Empty string = same origin (production, co-deployed with Flask).
+    // Set window.__env.apiUrl = 'http://localhost:8080' for local dev.
+    return window.__env?.apiUrl ?? '';
   },
   get neonAuthUrl(): string {
     return window.__env?.neonAuthUrl ?? '';
