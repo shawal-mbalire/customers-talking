@@ -1,8 +1,0 @@
-Resolved 49 packages in 1.63s
-warning: The package `pyjwt==2.12.1` does not have an extra named `cryptography`
-Downloading psycopg2-binary (4.0MiB)
- Downloaded psycopg2-binary
-Prepared 2 packages in 2.24s
-Installed 2 packages in 107ms
- + psycopg2-binary==2.9.11
- + pyjwt==2.12.1
