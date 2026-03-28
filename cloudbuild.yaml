@@ -4,9 +4,7 @@ steps:
       - build
       - -t
       - $_AR_HOSTNAME/$PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME:$COMMIT_SHA
-      - server          # build context is the server/ subdirectory
-      - -f
-      - server/Dockerfile
+      - .               # build context is the repo root
 
   - name: gcr.io/cloud-builders/docker
     args:
