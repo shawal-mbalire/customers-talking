@@ -16,49 +16,32 @@ export class AuthService {
   readonly currentUser = this._user.asReadonly();
   readonly isLoggedIn = () => this._user() !== null;
 
-  private get token(): string | null {
-    return localStorage.getItem('auth_token');
-  }
-
   checkSession() {
-    if (!this.token) {
-      this._user.set(null);
-      return of(null);
+    const stored = localStorage.getItem('auth_user');
+    if (stored) {
+      try { this._user.set(JSON.parse(stored)); } catch { /* ignore */ }
     }
-    return this.http.get<AuthUser>(`${env.apiUrl}/api/auth/me`).pipe(
-      tap((user) => this._user.set(user)),
-      catchError(() => {
-        this._user.set(null);
-        localStorage.removeItem('auth_token');
-        return of(null);
-      }),
-    );
+    return of(this._user());
   }
 
-  signup(email: string, password: string, name: string) {
-    return this.http
-      .post<{ token: string; user: AuthUser }>(`${env.apiUrl}/api/auth/sign-up`, { email, password, name })
-      .pipe(
-        tap(({ token, user }) => {
-          localStorage.setItem('auth_token', token);
-          this._user.set(user);
-        }),
-      );
+  signup(email: string, _password: string, name: string) {
+    // Stubbed — skip API call until auth backend is finalised
+    const user: AuthUser = { id: crypto.randomUUID(), email, name };
+    localStorage.setItem('auth_user', JSON.stringify(user));
+    this._user.set(user);
+    return of({ user });
   }
 
-  login(email: string, password: string) {
-    return this.http
-      .post<{ token: string; user: AuthUser }>(`${env.apiUrl}/api/auth/sign-in`, { email, password })
-      .pipe(
-        tap(({ token, user }) => {
-          localStorage.setItem('auth_token', token);
-          this._user.set(user);
-        }),
-      );
+  login(email: string, _password: string) {
+    // Stubbed — skip API call until auth backend is finalised
+    const user: AuthUser = { id: crypto.randomUUID(), email };
+    localStorage.setItem('auth_user', JSON.stringify(user));
+    this._user.set(user);
+    return of({ user });
   }
 
   logout() {
-    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
     this._user.set(null);
     return of(null);
   }
