@@ -21,8 +21,13 @@ def create_app(config_class=Config) -> Flask:
     from .services import solutions_store
     solutions_store._ensure_seeded()
 
-    frontend_origin = os.getenv("FRONTEND_ORIGIN", "https://customerstalking.web.app")
-    CORS(app, resources={r"/api/*": {"origins": frontend_origin}}, supports_credentials=True)
+    allowed_origins = [
+        os.getenv("FRONTEND_ORIGIN", "https://customerstalking.web.app"),
+        "https://customerstalking.web.app",
+        "https://customerstalking.firebaseapp.com",
+        "http://localhost:4200",
+    ]
+    CORS(app, resources={r"/api/*": {"origins": allowed_origins}}, supports_credentials=True)
 
     limiter.init_app(app)
 
