@@ -1,7 +1,9 @@
+import logging
 from datetime import datetime, timezone
 from flask import Blueprint, current_app, make_response, request, Response
 from ..services import dialogflow_service, session_store
 
+log = logging.getLogger(__name__)
 voice_bp = Blueprint("voice", __name__)
 
 
@@ -12,14 +14,25 @@ def _now() -> str:
 @voice_bp.post("/voice")
 def voice_webhook():
     """Africa's Talking Voice callback endpoint."""
-    caller = request.form.get("callerNumber", "")
-    session_id = request.form.get("sessionId", "")
+    try:
+        return _handle_voice()
+    except Exception:
+        log.exception("Voice webhook error")
+        return _voice_response(
+            "Sorry, we are experiencing technical difficulties. Please call back later.",
+            gather=False,
+            end=True,
+        )
+
+
+def _handle_voice() -> Response:
+    caller = request.form.get("callerNumber", "unknown")
+    session_id = request.form.get("sessionId", "") or caller
     dtmf = request.form.get("dtmfDigits", "")
 
     session = session_store.get_or_create(caller, "voice", session_id)
 
     if not dtmf:
-        # First call — greet the caller
         reply_text = (
             "Welcome to Customer Care. "
             "Press 1 for order status. "
@@ -31,6 +44,10 @@ def voice_webhook():
         session_store.update(session)
         return _voice_response(reply_text, gather=True)
 
+    if dtmf == "0":
+        session_store.update(session)
+        return _voice_response("Thank you for calling. Goodbye!", gather=False, end=True)
+
     result = dialogflow_service.detect_intent(dtmf, session_id, channel="voice")
     session.messages.append({"role": "user", "text": dtmf, "ts": _now()})
     session.messages.append({"role": "bot", "text": result["text"], "ts": _now()})
@@ -40,7 +57,7 @@ def voice_webhook():
 
     if result["is_handoff"]:
         session.status = "escalated"
-        session.reason = result["handoff_reason"]
+        session.reason = result.get("handoff_reason", "")
         session_store.update(session)
         return _voice_response(
             "Transferring you to a specialist. Please hold.",
@@ -53,18 +70,23 @@ def voice_webhook():
 
 
 def _voice_response(text: str, gather: bool = True, end: bool = False) -> Response:
-    base_url = current_app.config.get("BASE_URL", "http://localhost:5000")
+    base_url = current_app.config.get("BASE_URL", "").rstrip("/")
+    callback_url = f"{base_url}/voice"
+
     if end:
         xml = f'<?xml version="1.0"?><Response><Say>{text}</Say><Hangup/></Response>'
     elif gather:
         xml = (
             f'<?xml version="1.0"?><Response>'
-            f'<GetDigits timeout="30" finishOnKey="#" callbackUrl="{base_url}/voice">'
+            f'<GetDigits timeout="30" finishOnKey="#" callbackUrl="{callback_url}">'
             f"<Say>{text}</Say>"
-            f"</GetDigits></Response>"
+            f"</GetDigits>"
+            f"<Say>We did not receive any input. Goodbye.</Say><Hangup/>"
+            f"</Response>"
         )
     else:
         xml = f'<?xml version="1.0"?><Response><Say>{text}</Say></Response>'
+
     resp = make_response(xml)
     resp.headers["Content-Type"] = "text/xml"
     return resp
