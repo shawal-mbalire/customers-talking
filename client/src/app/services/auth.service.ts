@@ -26,6 +26,16 @@ export class AuthService {
     );
   }
 
+  signup(email: string, password: string, name: string) {
+    return from(authClient.signUp.email({ email, password, name })).pipe(
+      tap((result: any) => {
+        if (result.error) throw result.error;
+        const user = result.data?.user;
+        this._user.set(user ? { id: user.id, email: user.email } : null);
+      }),
+    );
+  }
+
   login(email: string, password: string) {
     return from(authClient.signIn.email({ email, password })).pipe(
       tap((result: any) => {

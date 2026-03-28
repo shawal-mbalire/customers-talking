@@ -27,7 +27,7 @@ class Config:
     GOOGLE_PRIVATE_KEY_ID = os.getenv("GOOGLE_PRIVATE_KEY_ID", "")
 
     # Base URL (used in Voice XML callbacks)
-    BASE_URL = os.getenv("BASE_URL", "http://localhost:5000")
+    BASE_URL = os.getenv("BASE_URL", "http://localhost:5000").rstrip("/")
 
     # Neon Database
     DATABASE_URL = os.getenv("DATABASE_URL", "")

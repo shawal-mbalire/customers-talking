@@ -17,22 +17,36 @@ export class LoginComponent {
   private auth = inject(AuthService);
   private router = inject(Router);
 
+  mode = signal<'login' | 'signup'>('login');
+
   form = this.fb.nonNullable.group({
+    name: [''],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required],
+    password: ['', [Validators.required, Validators.minLength(8)]],
   });
   error = signal('');
   loading = signal(false);
+
+  toggleMode() {
+    this.mode.set(this.mode() === 'login' ? 'signup' : 'login');
+    this.error.set('');
+    this.form.reset();
+  }
 
   submit() {
     if (this.form.invalid) return;
     this.loading.set(true);
     this.error.set('');
-    const { email, password } = this.form.getRawValue();
-    this.auth.login(email, password).subscribe({
+    const { email, password, name } = this.form.getRawValue();
+
+    const action$ = this.mode() === 'signup'
+      ? this.auth.signup(email, password, name)
+      : this.auth.login(email, password);
+
+    action$.subscribe({
       next: () => this.router.navigateByUrl('/sessions'),
       error: (e) => {
-        this.error.set(e?.message ?? e?.error?.message ?? 'Login failed');
+        this.error.set(e?.message ?? e?.error?.message ?? (this.mode() === 'signup' ? 'Sign up failed' : 'Login failed'));
         this.loading.set(false);
       },
     });
