@@ -75,6 +75,27 @@ const HOW = [
   { step: '04', title: 'You measure and improve', body: 'Every interaction is logged. Track resolution rates, satisfaction scores, and channel usage in real time.' },
 ];
 
+const CHANNELS = [
+  {
+    label: 'USSD',
+    code: '*384#',
+    description: 'Works on any mobile phone — no internet or smartphone required.',
+    steps: ['Dial *384#', 'Select your query from the menu', 'Get an instant AI response'],
+  },
+  {
+    label: 'SMS',
+    code: 'Shortcode',
+    description: 'Send a message any time. AI replies in seconds.',
+    steps: ['Text your question to the shortcode', 'Receive an AI-powered reply', 'Reply to continue the conversation'],
+  },
+  {
+    label: 'Voice',
+    code: 'Toll-free',
+    description: 'Call the toll-free line and speak naturally — AI understands.',
+    steps: ['Call the toll-free number', 'State your issue verbally', 'AI responds or connects you to an agent'],
+  },
+];
+
 @Component({
   selector: 'app-landing',
   imports: [RouterLink, ...HlmCardImports, ...HlmBadgeImports, HlmButton, ...HlmSeparatorImports],
@@ -86,4 +107,8 @@ export class LandingComponent {
   problems = PROBLEMS;
   features = FEATURES;
   how = HOW;
+  // aliases matching the template
+  journey = HOW;
+  channels = CHANNELS;
+  howItWorks = FEATURES;
 }

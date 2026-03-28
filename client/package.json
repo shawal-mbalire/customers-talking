@@ -4,9 +4,10 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "bun run generate:css && ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "generate:css": "tailwindcss -i src/styles.css -o src/generated.css"
   },
   "private": true,
   "packageManager": "npm@11.12.1",
