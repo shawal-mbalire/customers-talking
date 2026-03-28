@@ -1,58 +1,65 @@
-import { Injectable, signal } from '@angular/core';
-import { from, tap, of, catchError, timeout } from 'rxjs';
-import { authClient } from '../auth-client';
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { tap, catchError, of } from 'rxjs';
+import { env } from '../../env';
 
 export interface AuthUser {
   id: string;
   email: string;
+  name?: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private http = inject(HttpClient);
   private _user = signal<AuthUser | null>(null);
   readonly currentUser = this._user.asReadonly();
   readonly isLoggedIn = () => this._user() !== null;
 
+  private get token(): string | null {
+    return localStorage.getItem('auth_token');
+  }
+
   checkSession() {
-    return from(authClient.getSession()).pipe(
-      tap((session) => {
-        const user = session?.data?.user;
-        this._user.set(user ? { id: user.id, email: user.email } : null);
-      }),
+    if (!this.token) {
+      this._user.set(null);
+      return of(null);
+    }
+    return this.http.get<AuthUser>(`${env.apiUrl}/api/auth/me`).pipe(
+      tap((user) => this._user.set(user)),
       catchError(() => {
         this._user.set(null);
+        localStorage.removeItem('auth_token');
         return of(null);
       }),
     );
   }
 
   signup(email: string, password: string, name: string) {
-    return from(authClient.signUp.email({ email, password, name })).pipe(
-      timeout(15_000),
-      tap((result: any) => {
-        if (result.error) throw result.error;
-        const user = result.data?.user;
-        this._user.set(user ? { id: user.id, email: user.email } : null);
-      }),
-      catchError((e) => { throw e; }),
-    );
+    return this.http
+      .post<{ token: string; user: AuthUser }>(`${env.apiUrl}/api/auth/sign-up`, { email, password, name })
+      .pipe(
+        tap(({ token, user }) => {
+          localStorage.setItem('auth_token', token);
+          this._user.set(user);
+        }),
+      );
   }
 
   login(email: string, password: string) {
-    return from(authClient.signIn.email({ email, password })).pipe(
-      timeout(15_000),
-      tap((result: any) => {
-        if (result.error) throw result.error;
-        const user = result.data?.user;
-        this._user.set(user ? { id: user.id, email: user.email } : null);
-      }),
-      catchError((e) => { throw e; }),
-    );
+    return this.http
+      .post<{ token: string; user: AuthUser }>(`${env.apiUrl}/api/auth/sign-in`, { email, password })
+      .pipe(
+        tap(({ token, user }) => {
+          localStorage.setItem('auth_token', token);
+          this._user.set(user);
+        }),
+      );
   }
 
   logout() {
-    return from(authClient.signOut()).pipe(
-      tap(() => this._user.set(null)),
-    );
+    localStorage.removeItem('auth_token');
+    this._user.set(null);
+    return of(null);
   }
 }

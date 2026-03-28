@@ -50,7 +50,7 @@ export class LoginComponent {
         this.error.set(
           isTimeout
             ? 'Request timed out — please check your connection and try again.'
-            : (e?.message ?? e?.error?.message ?? (this.mode() === 'signup' ? 'Sign up failed' : 'Login failed'))
+            : (e?.error?.error ?? e?.message ?? (this.mode() === 'signup' ? 'Sign up failed' : 'Login failed'))
         );
         this.loading.set(false);
       },

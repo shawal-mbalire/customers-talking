@@ -64,4 +64,12 @@ def _create_tables() -> None:
                 active          BOOLEAN NOT NULL DEFAULT TRUE,
                 created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
+
+            CREATE TABLE IF NOT EXISTS users (
+                id            TEXT PRIMARY KEY,
+                email         TEXT UNIQUE NOT NULL,
+                name          TEXT NOT NULL DEFAULT '',
+                password_hash TEXT NOT NULL,
+                created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            );
         """)
