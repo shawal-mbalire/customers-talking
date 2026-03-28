@@ -46,7 +46,12 @@ export class LoginComponent {
     action$.subscribe({
       next: () => this.router.navigateByUrl('/sessions'),
       error: (e) => {
-        this.error.set(e?.message ?? e?.error?.message ?? (this.mode() === 'signup' ? 'Sign up failed' : 'Login failed'));
+        const isTimeout = e?.name === 'TimeoutError';
+        this.error.set(
+          isTimeout
+            ? 'Request timed out — please check your connection and try again.'
+            : (e?.message ?? e?.error?.message ?? (this.mode() === 'signup' ? 'Sign up failed' : 'Login failed'))
+        );
         this.loading.set(false);
       },
     });
