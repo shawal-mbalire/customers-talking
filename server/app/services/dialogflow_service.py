@@ -19,6 +19,9 @@ from google.cloud.dialogflowcx_v3beta1.types import (
     DetectIntentRequest,
     QueryInput,
     TextInput,
+    AudioInput,
+    OutputAudioConfig,
+    SsmlVoiceGender,
 )
 
 log = logging.getLogger(__name__)
@@ -159,4 +162,104 @@ def detect_intent(user_text: str, session_id: str | None = None, channel: str = 
 
     except Exception:
         log.exception("Dialogflow CX call failed for text=%r session=%s", user_text, session_id)
+        return _FALLBACK
+
+
+def detect_intent_with_audio(
+    audio_content: bytes,
+    session_id: str | None = None,
+    channel: str = "voice",
+    mime_type: str = "audio/wav",
+    sample_rate_hertz: int = 16000,
+    language_code: str | None = None,
+) -> dict:
+    """
+    Send audio content directly to Dialogflow CX for speech recognition and intent detection.
+    
+    Dialogflow CX will handle both speech-to-text transcription and intent detection in one call.
+    
+    Args:
+        audio_content: Raw audio bytes (WAV format recommended)
+        session_id: Unique session identifier for conversation context
+        channel: Channel identifier (default: "voice")
+        mime_type: Audio MIME type (default: "audio/wav")
+        sample_rate_hertz: Audio sample rate in Hz (default: 16000)
+        language_code: Override language code (uses config default if None)
+    
+    Returns:
+        Same dict structure as detect_intent()
+    """
+    cfg = current_app.config
+    session_id = session_id or str(uuid.uuid4())
+    language = language_code or cfg["DIALOGFLOW_LANGUAGE_CODE"]
+
+    # Validate required config
+    missing = [k for k in ("DIALOGFLOW_PROJECT_ID", "DIALOGFLOW_AGENT_ID", "GOOGLE_SERVICE_ACCOUNT_EMAIL", "GOOGLE_PRIVATE_KEY") if not cfg.get(k)]
+    if missing:
+        log.error("Dialogflow config missing: %s — returning fallback", missing)
+        return _FALLBACK
+
+    try:
+        credentials = _get_credentials()
+        api_endpoint = f"{cfg['DIALOGFLOW_LOCATION']}-dialogflow.googleapis.com"
+        log.info("Calling Dialogflow CX with audio at %s", api_endpoint)
+
+        client = SessionsClient(
+            credentials=credentials,
+            client_options={"api_endpoint": api_endpoint},
+        )
+        session_path = _build_session_path(client, session_id)
+
+        # Configure audio input for Dialogflow
+        audio_input = AudioInput(
+            config=OutputAudioConfig(
+                encoding=OutputAudioConfig.AudioEncoding.AUDIO_ENCODING_LINEAR_16,
+                sample_rate_hertz=sample_rate_hertz,
+                language_code=language,
+            ),
+            audio=audio_content,
+        )
+
+        df_request = DetectIntentRequest(
+            session=session_path,
+            query_input=QueryInput(
+                audio=audio_input,
+                language_code=language,
+            ),
+        )
+
+        response = client.detect_intent(request=df_request)
+        query_result = response.query_result
+
+        # Extract the transcribed text from the query result
+        transcribed_text = query_result.query_text or ""
+        log.info("Transcribed audio: %r", transcribed_text)
+
+        reply_parts: list[str] = []
+        is_handoff = False
+        handoff_reason = ""
+
+        for message in query_result.response_messages:
+            if message.live_agent_handoff:
+                is_handoff = True
+                metadata = message.live_agent_handoff.metadata
+                handoff_reason = metadata.get("reason", "") if metadata else ""
+            if message.text.text:
+                reply_parts.extend(message.text.text)
+
+        intent_name = getattr(query_result.intent, "display_name", "unknown")
+        reply_text = " ".join(reply_parts) or "I'm not sure how to help with that."
+        log.info("Dialogflow audio intent=%s handoff=%s", intent_name, is_handoff)
+
+        return {
+            "text": reply_text,
+            "intent_name": intent_name,
+            "is_handoff": is_handoff,
+            "handoff_reason": handoff_reason,
+            "source": "dialogflow",
+            "transcribed_text": transcribed_text,
+        }
+
+    except Exception:
+        log.exception("Dialogflow CX audio call failed for session=%s", session_id)
         return _FALLBACK

@@ -26,6 +26,12 @@ class Config:
     GOOGLE_PRIVATE_KEY = os.getenv("GOOGLE_PRIVATE_KEY", "").replace("\\n", "\n")
     GOOGLE_PRIVATE_KEY_ID = os.getenv("GOOGLE_PRIVATE_KEY_ID", "")
 
+    # Voice Configuration
+    VOICE_SAMPLE_RATE_HZ = int(os.getenv("VOICE_SAMPLE_RATE_HZ", "16000"))
+    VOICE_LANGUAGE_CODE = os.getenv("VOICE_LANGUAGE_CODE", "en-US")
+    VOICE_ENABLE_RECORDING = os.getenv("VOICE_ENABLE_RECORDING", "true").lower() == "true"
+    VOICE_RECORDING_STORAGE_URL = os.getenv("VOICE_RECORDING_STORAGE_URL", "")
+
     # Base URL (used in Voice XML callbacks)
     BASE_URL = os.getenv("BASE_URL", "http://localhost:5000").rstrip("/")
 

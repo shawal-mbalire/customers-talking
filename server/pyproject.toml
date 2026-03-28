@@ -9,6 +9,7 @@ dependencies = [
     "gunicorn>=23.0.0",
     "africastalking>=1.2.7",
     "google-cloud-dialogflow-cx>=1.38.0",
+    "google-cloud-speech>=2.34.0",
     "python-dotenv>=1.0.0",
     "flask-limiter>=4.1.1",
     "psycopg2-binary>=2.9.9",
