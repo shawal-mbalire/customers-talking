@@ -12,7 +12,7 @@ default:
 install:
     cd server && uv sync
     cd client && bun install && bun pm trust --all
-    @test -f server/.env || (cp server/.env.example server/.env && echo "Created server/.env — fill in your credentials.")
+    @test -f server/.env || (cp .env.example server/.env && echo "Created server/.env — fill in your credentials.")
 
 # Start Flask + Tailwind watch + Angular dev servers (frees ports 5000 & 4200 first)
 dev:
