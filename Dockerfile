@@ -5,5 +5,5 @@ COPY server/pyproject.toml server/uv.lock* ./
 RUN uv sync --frozen --no-dev
 COPY server/ .
 
-# PORT is injected by Cloud Run (default 8080); use shell form so $PORT expands
-CMD ["sh", "-c", "uv run gunicorn main:app --bind 0.0.0.0:${PORT:-8080} --workers 2"]
+# PORT is injected by Cloud Run (default 8080); exec ensures gunicorn receives signals directly
+CMD ["sh", "-c", "exec .venv/bin/gunicorn main:app --bind 0.0.0.0:${PORT:-8080} --workers 2"]
