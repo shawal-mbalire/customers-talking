@@ -59,4 +59,12 @@ def create_app(config_class=Config) -> Flask:
     def health():
         return {"status": "ok", "service": "customers-talking-server"}
 
+    @app.get("/debug/config")
+    def debug_config():
+        """Temporary: show which config keys are set (not values)."""
+        keys = ["DIALOGFLOW_PROJECT_ID", "DIALOGFLOW_AGENT_ID", "DIALOGFLOW_LOCATION",
+                "GOOGLE_SERVICE_ACCOUNT_EMAIL", "GOOGLE_PRIVATE_KEY", "GOOGLE_PRIVATE_KEY_ID",
+                "AT_USERNAME", "AT_API_KEY", "DATABASE_URL"]
+        return {k: bool(app.config.get(k)) for k in keys}
+
     return app
