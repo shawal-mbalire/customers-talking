@@ -9,6 +9,13 @@ _pool: ThreadedConnectionPool | None = None
 
 
 def init_db(database_url: str) -> None:
+    if not database_url:
+        raise RuntimeError(
+            "DATABASE_URL is not set. "
+            "Add it in Cloud Run: "
+            "gcloud run services update customers-talking-api "
+            "--set-env-vars DATABASE_URL=<your-neon-url>"
+        )
     global _pool
     _pool = ThreadedConnectionPool(minconn=1, maxconn=10, dsn=database_url)
     _create_tables()

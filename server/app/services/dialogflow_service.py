@@ -11,12 +11,36 @@ Returns a dict:
 """
 import uuid
 from flask import current_app
+from google.oauth2 import service_account
 from google.cloud.dialogflowcx_v3beta1 import SessionsClient
 from google.cloud.dialogflowcx_v3beta1.types import (
     DetectIntentRequest,
     QueryInput,
     TextInput,
 )
+
+_SCOPES = ["https://www.googleapis.com/auth/cloud-platform"]
+
+
+def _get_credentials() -> service_account.Credentials:
+    """Build service account credentials from individual env vars."""
+    cfg = current_app.config
+    info = {
+        "type": "service_account",
+        "project_id": cfg["DIALOGFLOW_PROJECT_ID"],
+        "private_key_id": cfg["GOOGLE_PRIVATE_KEY_ID"],
+        "private_key": cfg["GOOGLE_PRIVATE_KEY"],
+        "client_email": cfg["GOOGLE_SERVICE_ACCOUNT_EMAIL"],
+        "client_id": "",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_x509_cert_url": (
+            f"https://www.googleapis.com/robot/v1/metadata/x509/"
+            f"{cfg['GOOGLE_SERVICE_ACCOUNT_EMAIL'].replace('@', '%40')}"
+        ),
+    }
+    return service_account.Credentials.from_service_account_info(info, scopes=_SCOPES)
 
 
 def _build_session_path(client: SessionsClient, session_id: str) -> str:
@@ -50,7 +74,8 @@ def detect_intent(user_text: str, session_id: str | None = None, channel: str = 
     session_id = session_id or str(uuid.uuid4())
 
     client = SessionsClient(
-        client_options={"api_endpoint": f"{cfg['DIALOGFLOW_LOCATION']}-dialogflow.googleapis.com"}
+        credentials=_get_credentials(),
+        client_options={"api_endpoint": f"{cfg['DIALOGFLOW_LOCATION']}-dialogflow.googleapis.com"},
     )
     session_path = _build_session_path(client, session_id)
 
@@ -65,7 +90,6 @@ def detect_intent(user_text: str, session_id: str | None = None, channel: str = 
     response = client.detect_intent(request=request)
     query_result = response.query_result
 
-    # --- Collect bot reply text ---
     reply_parts: list[str] = []
     is_handoff = False
     handoff_reason = ""
