@@ -67,4 +67,33 @@ def create_app(config_class=Config) -> Flask:
                 "AT_USERNAME", "AT_API_KEY", "DATABASE_URL"]
         return {k: bool(app.config.get(k)) for k in keys}
 
+    @app.get("/debug/dialogflow")
+    def debug_dialogflow():
+        """Temporary: test Dialogflow CX connection and return raw error if any."""
+        import traceback
+        from .services.dialogflow_service import _get_credentials, _build_session_path
+        from google.cloud.dialogflowcx_v3beta1 import SessionsClient
+        from google.cloud.dialogflowcx_v3beta1.types import DetectIntentRequest, QueryInput, TextInput
+        try:
+            creds = _get_credentials()
+            location = app.config["DIALOGFLOW_LOCATION"]
+            client = SessionsClient(
+                credentials=creds,
+                client_options={"api_endpoint": f"{location}-dialogflow.googleapis.com"},
+            )
+            session_path = _build_session_path(client, "debug-test-session")
+            req = DetectIntentRequest(
+                session=session_path,
+                query_input=QueryInput(
+                    text=TextInput(text="hello"),
+                    language_code=app.config["DIALOGFLOW_LANGUAGE_CODE"],
+                ),
+            )
+            response = client.detect_intent(request=req)
+            messages = [m.text.text for m in response.query_result.response_messages if m.text.text]
+            intent = getattr(response.query_result.intent, "display_name", "unknown")
+            return {"status": "ok", "intent": intent, "messages": messages}
+        except Exception as e:
+            return {"status": "error", "error": str(e), "trace": traceback.format_exc()}, 500
+
     return app
